@@ -143,7 +143,6 @@ void parse (int *nplayers, int *highest) {
 	scanf("%d players; last marble is worth %d points", nplayers, highest);
 }
 
-#include <assert.h>
 int units[][3] = {
 	{9,    25,     32},
 	{10, 1618,   8317},
