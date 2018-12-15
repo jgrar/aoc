@@ -10,20 +10,19 @@ class FuelGrid:
 		self.serial = serial
 		self.width, self.height = size
 
-		self.__generate()
+		self.__genfuelgrid()
+		self.__gensumtable()
 
 	def __powerlevel (self, x, y):
 		rid = x + 10
 		return (rid * y + self.serial) * rid // 100 % 10 - 5
 
-	def __generate (self):
+	def __genfuelgrid (self):
 		self.__grid = {}
 
 		for x in range(1, self.height + 1):
 			for y in range(1, self.width + 1):
 				self.__grid[x, y] = self.__powerlevel(x, y)
-
-		self.__gensumtable()
 
 	def __gensumtable (self):
 
