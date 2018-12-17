@@ -66,25 +66,36 @@ def savevis (states, path):
 
 	mn, mx = statesrange(states)
 
-	cw = 6
-	ch = 6
+	cw = 4
+	ch = 4
 
 	width = (mx - mn + 1) * cw
 	height = (len(states) + 1) * ch
 
 	gap = 1
 
-	im = Image.new('RGB', (width, height), 'white')
-	draw = ImageDraw.Draw(im)
+	frames = []
+	im = Image.new('L', (width, height), 'white')
 
 	for y in range(len(states)):
+		draw = ImageDraw.Draw(im)
+
 		for x in states[y]:
 			rx = (x - mn) * cw
 			ry = (y * ch)
 			coords = [rx, ry, rx + cw, ry + ch]
 			draw.rectangle(coords, fill = 'black', outline = 'white')
 
-	im.save(path)
+		frames.append(im)
+		im = im.copy()
+
+	frames[0].save(
+		path,
+		append_images = frames[1:],
+		save_all = True,
+		duration = 100,
+		loop = 0
+	)
 
 
 SYMTAB = { '#': 1, '.': 0 }
@@ -151,7 +162,7 @@ def main ():
 	for _ in range(1, 100):
 		states.append(rules.apply(states[-1]))
 
-	savevis(states, 'vis.png')
+	savevis(states, 'vis.gif')
 
 if __name__ == '__main__':
 	main()
