@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+from PIL import Image, ImageDraw
 
 class State:
 
@@ -68,14 +69,23 @@ def savevis (states, path):
 	cw = 6
 	ch = 6
 
-	with open(path, 'w') as vis:
-		vis.write('<svg xmlns="http://www.w3.org/2000/svg">\n')
-		for y in range(len(states)):
-			for x in states[y]:
-				vis.write('\t<rect width="{}" height="{}" x="{}" y="{}" stroke="white"/>\n'.format(
-					cw, ch, (x - mn) * cw, y * ch, vis
-				))
-		vis.write("</svg>")
+	width = (mx - mn + 1) * cw
+	height = (len(states) + 1) * ch
+
+	gap = 1
+
+	im = Image.new('RGB', (width, height), 'white')
+	draw = ImageDraw.Draw(im)
+
+	for y in range(len(states)):
+		for x in states[y]:
+			rx = (x - mn) * cw
+			ry = (y * ch)
+			coords = [rx, ry, rx + cw, ry + ch]
+			draw.rectangle(coords, fill = 'black', outline = 'white')
+
+	im.save(path)
+
 
 SYMTAB = { '#': 1, '.': 0 }
 def tr (t):
@@ -141,7 +151,7 @@ def main ():
 	for _ in range(1, 100):
 		states.append(rules.apply(states[-1]))
 
-	savevis(states, 'vis.svg')
+	savevis(states, 'vis.png')
 
 if __name__ == '__main__':
 	main()
