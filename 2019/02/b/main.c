@@ -2,154 +2,97 @@
 #include <string.h>
 #include <stdio.h>
 
-enum Positions {
-	NOUN = 1,
-	VERB,
+#define CONT 0
+#define HALT 1
+
+typedef struct {
+	int mem[BUFSIZ];
+	size_t len;
+
+	int pos;
+} Intcode;
+
+int shift (Intcode *ic) {
+	return ic->mem[ic->mem[ic->pos++]];
+}
+
+int move (Intcode *ic, int loc, int val) {
+	return ic->mem[ic->mem[loc]] = val;
+}
+
+int halt (Intcode *ic) {
+	return HALT;
+}
+
+int add (Intcode *ic) {
+	int v1 = shift(ic), v2 = shift(ic);
+	move(ic, ic->pos++, v1 + v2);
+	return CONT;
+}
+
+int mul (Intcode *ic) {
+	int v1 = shift(ic), v2 = shift(ic);
+	move(ic, ic->pos++, v1 * v2);
+	return CONT;
+}
+
+typedef int (*Instruction)(Intcode *);
+
+Instruction instructions[] = {
+	/* 0     1    2      3      4     5     6     7     8      9 */
+	NULL,  add, mul,  NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
+	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  halt,
 };
 
-enum Opcode {
-	ADD = 1,
-	MUL,
-	HALT = 99,
-};
-
-struct intcode {
-	int *code;
-	int len;
-	int ip;
-};
-
-typedef struct intcode Intcode;
-
-#define BOUNDS_CHECK(x,m) if ((x) > (m)) abort()
-
-int shift (Intcode *intcode) {
-	BOUNDS_CHECK(intcode->ip, intcode->len);
-	return intcode->code[intcode->ip++];
+int next (Intcode *ic) {
+	return ic->mem[ic->pos++];
 }
 
-int load (Intcode *intcode, int addr) {
-	BOUNDS_CHECK(addr, intcode->len);
-	return intcode->code[addr];
+int run (Intcode *ic) {
+	while (instructions[next(ic)](ic) != HALT);
+	return ic->mem[0];
 }
 
-int write (Intcode *intcode, int addr, int value) {
-	BOUNDS_CHECK(addr, intcode->len);
-	return intcode->code[addr] = value;
-}
-
-int halt (Intcode *intcode) {
-	return 1;
-}
-
-int add (Intcode *intcode) {
-
-	int v1 = load(intcode, shift(intcode));
-	int v2 = load(intcode, shift(intcode));
-
-	write(intcode, shift(intcode), v1 + v2);
-	return 0;
-}
-
-int mul (Intcode *intcode) {
-
-	int v1 = load(intcode, shift(intcode));
-	int v2 = load(intcode, shift(intcode));
-
-	write(intcode, shift(intcode), v1 * v2);
-	return 0;
-}
-
-typedef int (*Operation)(Intcode *intcode);
-
-Operation optab[100] = { NULL };
-
-void init () {
-
-	optab[ADD] = &add;
-	optab[MUL] = &mul;
-
-	optab[HALT] = &halt;
-}
-
-int run (int *_code, int len, int noun, int verb) {
-
-	int code[len + 1];
-	Intcode intcode;
-
-	memcpy(code, _code, len * sizeof code[0]);
-	code[NOUN] = noun;
-	code[VERB] = verb;
-
-	intcode = (Intcode) {code, len, 0};
-
-	while (1) {
-
-		int opcode = shift(&intcode);
-		int status = optab[opcode](&intcode);
-
-		if (status != 0) {
-			break;
-		}
-	}
-
-	return intcode.code[0];
-}
-
-#define REALLOCN 256
-
-int read (int **code, int *size) {
-
-	int len = 0;
+void parse (Intcode *ic) {
 	int val;
-
 	while (scanf("%d,", &val) != EOF) {
-
-		if (len >= *size) {
-
-			int n = *size + REALLOCN;
-			int *p = realloc(*code, n * sizeof **code);
-
-			if (!p) {
-				abort();
-			}
-
-			*code = p;
-			*size = n;
-		}
-
-		(*code)[len++] = val;
+		ic->mem[ic->len++] = val;
 	}
-
-	return len;
 }
 
 int main (int argc, char *argv[]) {
+	Intcode ic;
+	memset(&ic, 0, sizeof ic);
 
-	int *code = NULL, size = 0;
-	int len = 0;
-
-	init();
-
-	len = read(&code, &size);
+	parse(&ic);
 
 	int x, y;
 	for (x = 0; x < 100; x++) {
 		for (y = 0; y < 100; y++) {
 
-			int retval;
+			Intcode tmp;
+			memcpy(&tmp, &ic, sizeof tmp);
 
-			retval = run(code, len, x, y);
+			tmp.mem[1] = x;
+			tmp.mem[2] = y;
 
-			if (retval == 19690720) {
+			int res = run (&tmp);
+
+			if (res == 19690720) {
 				printf("%02d%02d\n", x, y);
 				break;
 			}
 
 		}
 	}
-
-	free(code);
 
 	exit(EXIT_SUCCESS);
 }
