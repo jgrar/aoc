@@ -20,8 +20,8 @@ enum Modes {
 	RELATIVE
 };
 
-long mode (Intcode *ic) {
-	long mode = ic->modes % 10;
+int mode (Intcode *ic) {
+	int mode = ic->modes % 10;
 	ic->modes /= 10;
 	return mode;
 }
@@ -56,20 +56,20 @@ int mul (Intcode *ic) {
 }
 
 int read (Intcode *ic) {
-	long val;
-	scanf("%ld", &val);
+	int val;
+	scanf("%d", &val);
 
 	move(ic, ic->pos++, val);
 	return CONT;
 }
 
 int write (Intcode *ic) {
-	printf("%ld\n", shift(ic));
+	printf("%d\n", shift(ic));
 	return CONT;
 }
 
 int jnz (Intcode *ic) {
-	long val = shift(ic), loc = shift(ic);
+	int val = shift(ic), loc = shift(ic);
 
 	if (val != 0) {
 		ic->pos = loc;
@@ -78,7 +78,7 @@ int jnz (Intcode *ic) {
 }
 
 int jz (Intcode *ic) {
-	long val = shift(ic), loc = shift(ic);
+	int val = shift(ic), loc = shift(ic);
 
 	if (val == 0) {
 		ic->pos = loc;
@@ -87,8 +87,8 @@ int jz (Intcode *ic) {
 }
 
 int lt (Intcode *ic) {
-	long v1 = shift(ic), v2 = shift(ic);
-	long res = 0;
+	int v1 = shift(ic), v2 = shift(ic);
+	int res = 0;
 
 	if (v1 < v2) {
 		res = 1;
@@ -99,7 +99,7 @@ int lt (Intcode *ic) {
 }
 
 int eq (Intcode *ic) {
-	long v1 = shift(ic), v2 = shift(ic);
+	int v1 = shift(ic), v2 = shift(ic);
 	int res = 0;
 
 	if (v1 == v2) {
@@ -127,7 +127,7 @@ Instruction instructions[] = {
 };
 
 int next (Intcode *ic) {
-	long instr = ic->mem[ic->pos++];
+	int instr = ic->mem[ic->pos++];
 
 	ic->modes = instr / 100;
 	instr %= 100;
@@ -135,7 +135,7 @@ int next (Intcode *ic) {
 	return instr;
 }
 
-int eval (Intcode *ic, long instr) {
+int eval (Intcode *ic, int instr) {
 	return instructions[instr](ic);
 }
 
@@ -151,8 +151,8 @@ void parse (const char *path, Intcode *ic) {
 		exit(EXIT_FAILURE);
 	}
 
-	long val;
-	while (fscanf(fp, "%ld,", &val) != EOF) {
+	int val;
+	while (fscanf(fp, "%d,", &val) != EOF) {
 		ic->mem[ic->len++] = val;
 	}
 
