@@ -157,8 +157,7 @@ void run (Intcode *ic) {
 	while (eval(ic, next(ic)) != HALT);
 }
 
-size_t parse (const char *path, Intcode *ic) {
-
+void parse (const char *path, Intcode *ic) {
 	FILE *fp = fopen(path, "r");
 
 	if (!fp) {
@@ -167,7 +166,6 @@ size_t parse (const char *path, Intcode *ic) {
 	}
 
 	long val;
-
 	while (fscanf(fp, "%ld,", &val) != EOF) {
 		ic->mem[ic->len++] = val;
 	}
