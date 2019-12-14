@@ -5,6 +5,7 @@
 
 #define CONT 0
 #define HALT 1
+#define PAUS 2
 
 typedef struct {
 	long mem[BUFSIZ];
@@ -14,6 +15,8 @@ typedef struct {
 	long rbi;
 	long modes;
 
+	int in, out;
+	int status;
 } Intcode;
 
 enum Modes {
@@ -49,32 +52,29 @@ long move (Intcode *ic, long loc, long val) {
 }
 
 int halt (Intcode *ic) {
-	return HALT;
+	return ic->status = HALT;
 }
 
 int add (Intcode *ic) {
 	long v1 = shift(ic), v2 = shift(ic);
 	move(ic, ic->pos++, v1 + v2);
-	return CONT;
+	return ic->status = CONT;
 }
 
 int mul (Intcode *ic) {
 	long v1 = shift(ic), v2 = shift(ic);
 	move(ic, ic->pos++, v1 * v2);
-	return CONT;
+	return ic->status = CONT;
 }
 
 int scan (Intcode *ic) {
-	long val;
-	scanf("%ld", &val);
-
-	move(ic, ic->pos++, val);
-	return CONT;
+	move(ic, ic->pos++, ic->in);
+	return ic->status = CONT;
 }
 
 int print (Intcode *ic) {
-	printf("%ld\n", shift(ic));
-	return CONT;
+	ic->out = shift(ic);
+	return ic->status = PAUS;
 }
 
 int jnz (Intcode *ic) {
@@ -83,7 +83,7 @@ int jnz (Intcode *ic) {
 	if (val != 0) {
 		ic->pos = loc;
 	}
-	return CONT;
+	return ic->status = CONT;
 }
 
 int jz (Intcode *ic) {
@@ -92,7 +92,7 @@ int jz (Intcode *ic) {
 	if (val == 0) {
 		ic->pos = loc;
 	}
-	return CONT;
+	return ic->status = CONT;
 }
 
 int lt (Intcode *ic) {
@@ -104,7 +104,7 @@ int lt (Intcode *ic) {
 	}
 
 	move(ic, ic->pos++, res);
-	return CONT;
+	return ic->status = CONT;
 }
 
 int eq (Intcode *ic) {
@@ -116,12 +116,12 @@ int eq (Intcode *ic) {
 	}
 
 	move(ic, ic->pos++, res);
-	return CONT;
+	return ic->status = CONT;
 }
 
 int adjrb (Intcode *ic) {
 	ic->rbi += shift(ic);
-	return CONT;
+	return ic->status = CONT;
 }
 
 typedef int (*Instruction)(Intcode *);
@@ -153,8 +153,9 @@ int eval (Intcode *ic, long instr) {
 	return instructions[instr](ic);
 }
 
-void run (Intcode *ic) {
-	while (eval(ic, next(ic)) != HALT);
+int run (Intcode *ic) {
+	while (eval(ic, next(ic)) == CONT);
+	return ic->status;
 }
 
 void parse (const char *path, Intcode *ic) {
@@ -173,15 +174,26 @@ void parse (const char *path, Intcode *ic) {
 	fclose(fp);
 }
 
+#define LEN(a) (sizeof (a) / sizeof (a)[0])
+
 int main (int argc, char *argv[]) {
-	char **p;
+	int inputs[] = {1, 2};
+
+	int i;
 
 	Intcode ic;
 	memset(&ic, 0, sizeof ic);
+	parse(argv[1], &ic);
 
-	for (p = argv + 1; *p; p++) {
-		parse(*p, &ic);
-		run(&ic);
+	for (i = 0; i < LEN(inputs); i++) {
+		Intcode tc;
+		memcpy(&tc, &ic, sizeof tc);
+
+		tc.in = inputs[i];
+		while (tc.status != HALT) {
+			run(&tc);
+		}
+		printf("%ld\n", tc.out);
 	}
 
 	exit(EXIT_SUCCESS);
