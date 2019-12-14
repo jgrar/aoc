@@ -64,7 +64,7 @@ int mul (Intcode *ic) {
 	return CONT;
 }
 
-int read (Intcode *ic) {
+int scan (Intcode *ic) {
 	long val;
 	scanf("%ld", &val);
 
@@ -72,7 +72,7 @@ int read (Intcode *ic) {
 	return CONT;
 }
 
-int write (Intcode *ic) {
+int print (Intcode *ic) {
 	printf("%ld\n", shift(ic));
 	return CONT;
 }
@@ -128,7 +128,7 @@ typedef int (*Instruction)(Intcode *);
 
 Instruction instructions[] = {
 	/* 0     1    2      3      4     5     6     7     8      9 */
-	NULL,  add, mul,  read, write,  jnz,   jz,   lt,   eq, adjrb,
+	NULL,  add, mul,  scan, print,  jnz,   jz,   lt,   eq, adjrb,
 	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
 	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
 	NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL,  NULL,
